@@ -77,25 +77,28 @@ const populateSupabaseTable = async (filePath) => {
   const oldUpdatedFilePath = filePathSteps.join("\\");
 
   cred = {
-    OLD_JSON_FILENAME: oldUpdatedFilePath,
-    NEW_JSON_FILENAME: filePath + ".json",
+    OLD_JSON_FILEPATH: oldUpdatedFilePath,
+    NEW_JSON_FILEPATH: filePath + ".json",
   };
 
   const oldSemesterData = await JSON.parse(
-    fs.readFileSync(cred.OLD_JSON_FILENAME)
+    fs.readFileSync(cred.OLD_JSON_FILEPATH)
   );
   const newSemesterData = await JSON.parse(
-    fs.readFileSync(cred.NEW_JSON_FILENAME)
+    fs.readFileSync(cred.NEW_JSON_FILEPATH)
   );
 
   const deletedItems = await findDifference(oldSemesterData, newSemesterData);
+  console.log(deletedItems.deletedDepartments);
+  console.log(deletedItems.deletedCourses);
+  console.log(deletedItems.deletedSections);
 
   await deleteRemovedCourses(deletedItems.deletedCourses);
   await deleteRemovedSections(deletedItems.deletedSections);
 
   console.time("Start Populate");
-  await populateCoursesTable(cred.NEW_JSON_FILENAME);
-  await populateSectionsTable(cred.NEW_JSON_FILENAME);
+  await populateCoursesTable(cred.NEW_JSON_FILEPATH);
+  await populateSectionsTable(cred.NEW_JSON_FILEPATH);
   console.timeEnd("Start Populate");
 };
 
@@ -178,8 +181,8 @@ function timeToMilliseconds(time) {
   };
 }
 
-async function populateCoursesTable(JSON_FILENAME) {
-  const semesterData = await JSON.parse(fs.readFileSync(JSON_FILENAME));
+async function populateCoursesTable(JSON_FILEPATH) {
+  const semesterData = await JSON.parse(fs.readFileSync(JSON_FILEPATH));
   const departmentList = Object.keys(semesterData);
 
   for (let i = 0; i < departmentList.length; i++) {
@@ -224,8 +227,8 @@ async function populateCoursesTable(JSON_FILENAME) {
   }
 }
 
-async function populateSectionsTable(JSON_FILENAME) {
-  const semesterData = await JSON.parse(fs.readFileSync(JSON_FILENAME));
+async function populateSectionsTable(JSON_FILEPATH) {
+  const semesterData = await JSON.parse(fs.readFileSync(JSON_FILEPATH));
 
   const departmentList = Object.keys(semesterData);
 

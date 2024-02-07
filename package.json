@@ -5,7 +5,7 @@
   "main": "main.js",
   "type": "commonjs",
   "scripts": {
-    "runTS": "tsc main.ts & node --env-file=.env main.js"
+    "start": "node --env-file=.env main.js"
   },
   "keywords": [],
   "author": "",

@@ -6,6 +6,6 @@ module.exports = winston.createLogger({
     winston.format.timestamp(),
     winston.format.json()
   ),
-  defaultMeta: { service: "reddit-scraper" },
+  defaultMeta: { service: "NJIT-courses-scraper" },
   transports: [new winston.transports.Console()],
 });

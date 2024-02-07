@@ -1,4 +1,4 @@
--- Run query to create postgres database
+-- Run query to create postgres database tables
 
 DROP TABLE IF EXISTS sections;
 DROP TABLE IF EXISTS courses;
@@ -9,7 +9,7 @@ CREATE TABLE courses (
     course_name TEXT,
     course_number TEXT,
     number_of_sections INT,
-    CONSTRAINT pk_uniqueness UNIQUE (department, course_number) 
+    CONSTRAINT courses_uniqueness UNIQUE (department, course_number) 
 );
 
   
@@ -32,6 +32,6 @@ CREATE TABLE sections (
     ON UPDATE CASCADE
     ON DELETE CASCADE,
 
-    CONSTRAINT uniqueness_clause
+    CONSTRAINT sections_uniqueness
     UNIQUE (section_number, course_id)
   );

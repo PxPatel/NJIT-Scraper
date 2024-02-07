@@ -1,5 +1,5 @@
 const puppeteer = require("puppeteer");
-const cons = require("./constants");
+const constants = require("./constants");
 const logger = require("./logger");
 const fs = require("fs");
 
@@ -8,10 +8,7 @@ async function initiatePuppeteer() {
   const browser = await newBrowser();
   logger.info("connecting...");
   const page = await browser.newPage();
-  await page.goto(
-    constants.websiteLink,
-    { waitUntil: "networkidle0" }
-  );
+  await page.goto(constants.websiteLink, { waitUntil: "networkidle0" });
   logger.info("connected!");
   return { page, browser };
 }
@@ -22,20 +19,20 @@ const newBrowser = async () => {
 
 const getSubjects = async (page) => {
   const subjects = await page.$$eval(
-    cons.SUBJECT_TABLE_CSS_SELECTOR,
+    constants.SUBJECT_TABLE_CSS_SELECTOR,
     (subjectsElement) => {
       return subjectsElement.map((subjectElement) => subjectElement.innerText);
     }
   );
 
-  const subjectsHandler = await page.$$(cons.SUBJECT_TABLE_CSS_SELECTOR);
+  const subjectsHandler = await page.$$(constants.SUBJECT_TABLE_CSS_SELECTOR);
 
   return { subjects, subjectsHandler };
 };
 
 const getCoursesForSubject = async (page) => {
   const courses = await page.$$eval(
-    cons.COURSE_TABLE_CSS_SELECTOR,
+    constants.COURSE_TABLE_CSS_SELECTOR,
     (coursesElement) => {
       return coursesElement.map((courseElement) => courseElement.innerText);
     }
@@ -174,7 +171,7 @@ const getAllSectionsForCourse = async (page, courses) => {
       }
       return newDict;
     },
-    await page.$(cons.SPAN_CONTAINER_SELECTOR),
+    await page.$(constants.SPAN_CONTAINER_SELECTOR),
     courses
   );
   return coursesDict;
@@ -193,7 +190,7 @@ const getCompletedSemester = async (page, start, stop) => {
   for (let i = startIndex; i < iterateLength; i++) {
     await subjectsHandler[i].click();
 
-    await page.waitForSelector(cons.SPAN_CONTAINER_SELECTOR, {
+    await page.waitForSelector(constants.SPAN_CONTAINER_SELECTOR, {
       visible: true,
     });
 
@@ -212,7 +209,6 @@ function updateAndSaveFile(filePath, jsonData) {
     const filePathSteps = filePath.split("\\");
 
     const fileName = filePathSteps[filePathSteps.length - 1];
-    console.log(fileName);
     const directoryPath = filePathSteps
       .slice(0, filePathSteps.length - 1)
       .join("\\");
@@ -243,20 +239,14 @@ function updateAndSaveFile(filePath, jsonData) {
 }
 
 async function main(filePath) {
-  if (!fileName) {
+  if (!filePath) {
     throw new Error("No file path provided");
-  }
-
-  if (!fs.existsSync(filePath + ".json")) {
-    // throw new Error(filePath + ": File name does not exist or is not at root");
-    fs.mkdirSync(filePath, { recursive: true });
   }
 
   console.time("Scraping");
   const { page, browser } = await initiatePuppeteer();
 
   const completedSemesterCourses = await getCompletedSemester(page);
-  console.log(Object.keys(completedSemesterCourses).length);
 
   const jsonData = JSON.stringify(completedSemesterCourses);
 
