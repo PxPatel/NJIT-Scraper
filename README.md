@@ -20,7 +20,7 @@ As mentioned, this project is a stepping stone for a larger project. Keep an eye
 
 ## Tech Stack
 
-- Javascript
+- Node (Javascript)
 - Puppeteer
 - Supabase (PostgreSQL)
 
@@ -44,7 +44,7 @@ TIP: Use the .env.example as a template to create your own .env file
 
 Create the necessary tables on Supabase database by writing on the SQL Editor on the Console.
 
-Copy and Paste the PostgreSQL query in the db.sql file into the SQL Editor, and run the query.
+Copy and Paste the PostgreSQL query at /src/supabase/db.sql file into the SQL Editor, and run the query.
 
 ## Usage
 
