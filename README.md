@@ -1,16 +1,15 @@
 # NJIT Courses Web-Scraper
 
-## Purpose
-
-To collect data regarding available courses and class section for the **latest posted semester**, and store the data in a Supabase database. This project is part of a larger project designed for NJIT students
-
-NOTE: "Latest posted semester" can either be the current semester or the next semester, if the administration rolled out new information for the coming semester. Please be aware.
-
 ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
 
+## Purpose
+
+To collect data regarding available courses and class section for the **latest posted semester**, and store the data in a Supabase database. This project is part of a larger project designed for NJIT students
+
+NOTE: "Latest posted semester" can either be the current semester or the next semester, if the administration rolled out new information for the coming semester. Please be aware.
 
 ## Contribution
 
