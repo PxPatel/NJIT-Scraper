@@ -16,7 +16,7 @@ CREATE TABLE courses (
 CREATE TABLE sections (
     id BIGINT PRIMARY KEY generated always as identity,
     section_number TEXT,
-    course_id TEXT,
+    course TEXT,
     crn INT,
     days TEXT[],
     start_time BIGINT,
