@@ -1,12 +1,21 @@
-var scraper = require("./src/scraper/index");
-var sb = require("./src/supabase/supabase");
+var scraper = require("./src/alt_scraper/index");
+var sb = require("./src/alt_supabase/alt_supabase");
 
 async function main() {
-  const JSON_FILEPATH = "sample\\data\\spring2024";
+  const FILE_DIRECTORY = "sample\\alt";
 
-  await scraper.runScraper(JSON_FILEPATH);
+  // const semesterDetails = {
+  //   year: "2023",
+  //   season: "summer",
+  // };
 
-  await sb.populateSupabaseTable(JSON_FILEPATH);
+  if (typeof semesterDetails === "undefined") {
+    await scraper.runScraper(FILE_DIRECTORY);
+  } else {
+    await scraper.runScraper(FILE_DIRECTORY, semesterDetails);
+  }
+
+  // await sb.addSemesterDataToSupabase(FILE_DIRECTORY, semesterDetails);
 }
 
 main();

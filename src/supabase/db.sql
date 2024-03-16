@@ -27,7 +27,7 @@ CREATE TABLE sections (
     instructor TEXT,
 
     CONSTRAINT fk_sections_course_id
-    FOREIGN KEY (course_id)
+    FOREIGN KEY (course)
     REFERENCES courses (course_id)
     ON UPDATE CASCADE
     ON DELETE CASCADE,

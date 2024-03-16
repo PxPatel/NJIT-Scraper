@@ -1,101 +1,31 @@
-var supabase = require("./initialize.js");
-var constants = require("./constants");
 const fs = require("fs");
+const { sanityCheckSemesterDetail } = require("../util/sanitation/semester.js");
 
-var supabaseClient = supabase.supabase;
 
-async function findDeletedItems(oldJson, newJson) {
-  const deletedDepartments = findDeletedKeys(oldJson, newJson);
-  const deletedCourses = findDeletedCourses(oldJson, newJson);
-  const deletedSections = findDeletedSections(oldJson, newJson);
-
-  return {
-    deletedDepartments,
-    deletedCourses,
-    deletedSections,
-  };
-}
-
-function findDeletedCourses(oldJson, newJson) {
-  const deletedCourses = {};
-
-  for (const department in oldJson) {
-    if (department in newJson) {
-      const coursesRemoved = findDeletedKeys(
-        oldJson[department],
-        newJson[department]
-      );
-
-      if (coursesRemoved.length > 0) {
-        deletedCourses[department] = coursesRemoved;
-      }
-    } else {
-      deletedCourses[department] = Object.keys(oldJson[department]);
-    }
+const populateSupabaseTable = async (filePath, semesterDetails) => {
+  if (!filePath) {
+    throw new Error("No file path provided");
   }
 
-  return deletedCourses;
-}
-
-function findDeletedSections(oldJson, newJson) {
-  const deletedSections = {};
-
-  for (const department in oldJson) {
-    for (const course in oldJson[department]) {
-      const sectionsRemoved = findDeletedKeys(
-        oldJson[department][course],
-        newJson[department]?.[course] || {}
-      );
-
-      if (sectionsRemoved.length > 0) {
-        if (!(department in deletedSections)) {
-          deletedSections[department] = {};
-        }
-        deletedSections[department][course] = sectionsRemoved;
-      }
-    }
+  semesterDetails = sanityCheckSemesterDetail(semesterDetails);
+  const { sanity, year, season } = semesterDetails;
+  if (!sanity) {
+    throw new Error("Please provide valid 'semesterDetails' paramater");
   }
 
-  return deletedSections;
-}
-
-function findDeletedKeys(oldObj, newObj) {
-  return Object.keys(oldObj).filter((key) => !(key in newObj));
-}
-
-async function findDifference(oldSemesterData, newSemesterData) {
-  const deletedItems = findDeletedItems(oldSemesterData, newSemesterData);
-  return deletedItems;
-}
-
-const populateSupabaseTable = async (filePath) => {
-  const filePathSteps = filePath.split("\\");
-
-  filePathSteps[filePathSteps.length - 1] =
-    "old_" + filePathSteps[filePathSteps.length - 1] + ".json";
-
-  const oldUpdatedFilePath = filePathSteps.join("\\");
-
-  cred = {
-    OLD_JSON_FILEPATH: oldUpdatedFilePath,
-    NEW_JSON_FILEPATH: filePath + ".json",
+  fileLocations = {
+    OLD_JSON_FILEPATH: filePath + `old_${season}_${year}` + ".json",
+    NEW_JSON_FILEPATH: filePath + `${season}_${year}` + ".json",
   };
 
+  //TODO: Add a try catch to see that file exists
   const oldSemesterData = await JSON.parse(
-    fs.readFileSync(cred.OLD_JSON_FILEPATH)
+    fs.readFileSync(fileLocations.OLD_JSON_FILEPATH)
   );
   const newSemesterData = await JSON.parse(
-    fs.readFileSync(cred.NEW_JSON_FILEPATH)
+    fs.readFileSync(fileLocations.NEW_JSON_FILEPATH)
   );
 
-  const deletedItems = await findDifference(oldSemesterData, newSemesterData);
-  console.log(deletedItems.deletedDepartments);
-  console.log(deletedItems.deletedCourses);
-  console.log(deletedItems.deletedSections);
-
-  await deleteRemovedCourses(deletedItems.deletedCourses);
-  await deleteRemovedSections(deletedItems.deletedSections);
-  console.log("Finished with Deletion");
 
   // let count = 0;
   // let sectionCount = 0;
@@ -111,9 +41,9 @@ const populateSupabaseTable = async (filePath) => {
   // console.log(sectionCount);
 
   console.time("Start Populate");
-  await populateCoursesTable(cred.NEW_JSON_FILEPATH);
+  await populateCoursesTable(fileLocations.NEW_JSON_FILEPATH);
   console.log("Finished with Courses");
-  await populateSectionsTable(cred.NEW_JSON_FILEPATH);
+  await populateSectionsTable(fileLocations.NEW_JSON_FILEPATH);
   console.log("Finished with Sections");
   console.timeEnd("Start Populate");
 };
@@ -137,30 +67,6 @@ async function deleteRemovedSections(deletedSections) {
         await deleteSection(dep, course_number, section_number);
       }
     }
-  }
-}
-
-async function deleteCourse(dep, course_number) {
-  const { error } = await supabaseClient
-    .from(constants.COURSES_TABLE)
-    .delete()
-    .eq("department", dep)
-    .eq("course_number", course_number);
-
-  if (error) {
-    console.log(error);
-  }
-}
-
-async function deleteSection(dep, course_number, section_number) {
-  const { error } = await supabaseClient
-    .from(constants.SECTIONS_TABLE)
-    .delete()
-    .eq("section_number", section_number)
-    .eq("course", `${dep}${course_number}`);
-
-  if (error) {
-    console.log(error);
   }
 }
 
@@ -308,51 +214,6 @@ async function populateSectionsTable(JSON_FILEPATH) {
 
       // console.log("Finished course:", course, "\n Next Course in:", department);
     }
-  }
-}
-
-async function upsertBatchCourse(batchedData) {
-  const { data, error } = await supabaseClient
-    .from(constants.COURSES_TABLE)
-    .upsert(batchedData)
-    .select();
-
-  if (error && error.code !== "23505" && error.code !== "23503") {
-    console.log(data, error);
-  }
-
-  if (!data && error && error.code !== "23505" && error.code !== "23503") {
-    return false;
-  }
-
-  return true;
-}
-
-async function upsertBatchSection(batchedData) {
-  const { data, error } = await supabaseClient
-    .from(constants.SECTIONS_TABLE)
-    .upsert(batchedData)
-    .select();
-
-  if (error && error.code !== "23505" && error.code !== "23503") {
-    console.log(data, error);
-  }
-
-  if (!data && error && error.code !== "23505" && error.code !== "23503") {
-    return false;
-  }
-
-  return true;
-}
-
-async function deleteTable(tableName) {
-  const { error } = await supabaseClient
-    .from(tableName)
-    .delete()
-    .neq("course_id", " ");
-
-  if (error) {
-    console.log(error);
   }
 }
 
