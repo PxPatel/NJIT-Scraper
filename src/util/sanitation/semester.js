@@ -25,6 +25,7 @@ function sanityCheckSemesterDetail(semesterDetails) {
     const [startYear, endYear] = yearRangeString.split("-").map(Number);
 
     if (startYear >= endYear) return false;
+    if (endYear - startYear !== 1) return false;
 
     return true;
   };

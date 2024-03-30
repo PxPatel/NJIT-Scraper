@@ -51,11 +51,7 @@ async function upsertSectionSemesterJoinTable(batchedData) {
     .from(constants.SECTION_SEM_TABLE)
     .upsert(batchedData)
     .select();
-
-  if (error) {
-    console.asset(false, batchedData, error)
-  }
-
+    
   if (error && error.code !== "23505" && error.code !== "23503") {
     console.log(data, error);
   }

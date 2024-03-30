@@ -1,4 +1,4 @@
-exports.SEMESTER_TABLE = "alt_semester";
+exports.SEMESTER_TABLE = "alt_semesters";
 exports.COURSES_TABLE = "alt_courses";
 exports.SECTIONS_TABLE = "alt_sections";
 exports.COURSE_SEM_TABLE = "course_semester";

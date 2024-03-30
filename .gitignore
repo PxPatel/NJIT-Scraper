@@ -1,6 +1,10 @@
-#sample data
+# # sample data
 sample
 data
+
+# Dev log files
+log
+log.txt
 
 # Logs
 logs

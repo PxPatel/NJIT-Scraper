@@ -4,6 +4,8 @@ const logger = require("./logger");
 const fs = require("fs");
 const { sanityCheckSemesterDetail } = require("../util/sanitation/semester");
 
+const HARD_WAIT_TIME = 1000;
+
 async function initiatePuppeteer() {
   logger.info("Launching Browser");
   const browser = await newBrowser();
@@ -15,7 +17,7 @@ async function initiatePuppeteer() {
 }
 
 const newBrowser = async () => {
-  return puppeteer.launch({ headless: false });
+  return puppeteer.launch({ headless: true });
 };
 
 const getSubjects = async (page) => {
@@ -43,19 +45,29 @@ const getCoursesForSubject = async (page) => {
 };
 
 const getAllSectionsForCourse = async (page, courses) => {
-  async function wait() {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
-  }
+  await hardWait();
 
-  await wait();
+  const container = await page.$(constants.SPAN_CONTAINER_SELECTOR);
 
   const coursesDict = await page.evaluate(
     (container, courses) => {
       if (!container) {
         return {};
       }
+
+      const seperateData = (tdElement) => {
+        const textContent = tdElement.innerHTML.trim();
+        // return textContent;
+
+        // Check if the text content contains the <br> tag
+        if (textContent.includes("<br>")) {
+          // If it contains <br>, split the text content based on <br> tag
+          return textContent.split("<br>").map((text) => text.trim());
+        } else {
+          // If it doesn't contain <br>, return an array with just the text content
+          return [textContent];
+        }
+      };
 
       const getSectionDetails = (dupTable) => {
         const sections = {};
@@ -78,15 +90,15 @@ const getAllSectionsForCourse = async (page, courses) => {
               .querySelector("td:nth-child(1)")
               .textContent.trim();
             const crn = row.querySelector("td:nth-child(2)").textContent.trim();
-            const days = row
-              .querySelector("td:nth-child(3)")
-              .textContent.trim();
-            const times = row
-              .querySelector("td:nth-child(4)")
-              .textContent.trim();
-            const locations = row
-              .querySelector("td:nth-child(5)")
-              .textContent.trim();
+
+            const days = seperateData(row.querySelector("td:nth-child(3)"));
+
+            const times = seperateData(row.querySelector("td:nth-child(4)"));
+
+            const locations = seperateData(
+              row.querySelector("td:nth-child(5)")
+            );
+
             const status = row
               .querySelector("td:nth-child(6)")
               .textContent.trim();
@@ -172,11 +184,17 @@ const getAllSectionsForCourse = async (page, courses) => {
       }
       return newDict;
     },
-    await page.$(constants.SPAN_CONTAINER_SELECTOR),
+    container,
     courses
   );
   return coursesDict;
 };
+
+async function hardWait(time) {
+  await new Promise((resolve) => {
+    setTimeout(resolve, time ? time : 100);
+  });
+}
 
 const getCompletedSemester = async (page, start, stop) => {
   logger.info("Starting process to scrap");
@@ -184,16 +202,17 @@ const getCompletedSemester = async (page, start, stop) => {
   const completedSemester = {};
 
   const { subjects, subjectsHandler } = await getSubjects(page);
+  console.log(subjects);
 
   let startIndex = start ? start : 0;
   let iterateLength = stop ? stop : subjectsHandler.length;
 
+  // console.log("subjects:", subjects);
   for (let i = startIndex; i < iterateLength; i++) {
     await subjectsHandler[i].click();
 
-    await page.waitForSelector(constants.SPAN_CONTAINER_SELECTOR, {
-      visible: true,
-    });
+    await wait(page);
+    await hardWait(HARD_WAIT_TIME); //HERE
 
     const { courses } = await getCoursesForSubject(page);
 
@@ -206,13 +225,30 @@ const getCompletedSemester = async (page, start, stop) => {
 };
 
 async function navigateToSemester(page, year, season) {
-  await page.waitForSelector(constants.SEMESTER_DROPDOWN_SELECTOR);
+  await wait(page);
 
   const dropdown = await page.$(constants.SEMESTER_DROPDOWN_SELECTOR);
 
   await dropdown.type(`${year} ${season}`);
 
+  await wait(page);
+  await hardWait(HARD_WAIT_TIME); //HERE
+}
+
+async function wait(page) {
   await page.waitForSelector(constants.SPAN_CONTAINER_SELECTOR, {
+    visible: true,
+  });
+
+  await page.waitForSelector(constants.COURSE_TABLE_CSS_SELECTOR, {
+    visible: true,
+  });
+
+  await page.waitForSelector(constants.SUBJECT_TABLE_CSS_SELECTOR, {
+    visible: true,
+  });
+
+  await page.waitForSelector(constants.SEMESTER_DROPDOWN_SELECTOR, {
     visible: true,
   });
 }
@@ -253,7 +289,7 @@ function updateAndSaveFile(filePath, jsonData, semesterDetails) {
 }
 
 async function getCurrentSemester(page) {
-  await page.waitForSelector(constants.SEMESTER_DROPDOWN_SELECTOR);
+  await wait(page);
 
   const dropdown = await page.$(constants.SEMESTER_DROPDOWN_SELECTOR);
   const selectedOptionText = await dropdown.evaluate((select) => {
@@ -270,7 +306,7 @@ async function main(filePath, semesterDetails) {
     throw new Error("No file path provided");
   }
 
-  console.time("Scraping");
+  console.time("SCRAPING PROCESS");
   const { page, browser } = await initiatePuppeteer();
 
   if (semesterDetails) {
@@ -290,15 +326,13 @@ async function main(filePath, semesterDetails) {
 
   const completedSemesterCourses = await getCompletedSemester(page);
 
-  console.log("COMP:", completedSemesterCourses);
-
   const jsonData = JSON.stringify(completedSemesterCourses);
 
   updateAndSaveFile(filePath, jsonData, semesterDetails);
 
   await browser.close();
 
-  console.timeEnd("Scraping");
+  console.timeEnd("SCRAPING PROCESS");
 }
 
 exports.runScraper = main;

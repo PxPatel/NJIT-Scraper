@@ -3,11 +3,9 @@ const { sanityCheckSemesterDetail } = require("../util/sanitation/semester.js");
 const { deleteStaleRows } = require("./lib/screeningUpdates.js");
 const { addSemester } = require("./lib/addSemesterRow.js");
 const { altCoursesPopulate } = require("./lib/populateCourses.js");
-const {
-  test_altCoursesPopulate,
-  test_altSectionsPopulate,
-} = require("./lib/test.js");
 const { altSectionsPopulate } = require("./lib/populateSections.js");
+const { verifySingularData } = require("../util/verification/verify.js");
+const { logger } = require("../util/logging/logger.js");
 
 exports.addSemesterDataToSupabase = async function addSemesterDataToSupabase(
   filePath,
@@ -23,33 +21,35 @@ exports.addSemesterDataToSupabase = async function addSemesterDataToSupabase(
     throw new Error("Please provide valid 'semesterDetails' paramater");
   }
 
-  fileLocations = {
-    OLD_JSON_FILEPATH:
-      filePath + `\\${season}_${year}\\old_${season}_${year}` + ".json",
-    NEW_JSON_FILEPATH:
-      filePath + `\\${season}_${year}\\${season}_${year}` + ".json",
-  };
+  const fileLocations = createFileLocationPaths(filePath, season, year);
 
   const { oldSemesterData, newSemesterData } = await readJSONFiles(
     fileLocations
   );
 
-  // deleteStaleRows(oldSemesterData, newSemesterData);
+  verifyJSONCount(newSemesterData, { log: true });
 
-  // Add semesterDetails into sem table
-  await addSemester({
-    semester_id: `${season}_${year}`,
-    season: season,
-    year: year,
-  });
+  await semesterDataChanges(oldSemesterData, newSemesterData, semesterDetails);
 
-  verifyJSONCount(newSemesterData);
+  const { isDataMissMatched, missMatchedData } =
+    verifySingularData(newSemesterData);
+  console.log(
+    `\nisDataMissMatched: ${isDataMissMatched}, missMatchedData: ${
+      missMatchedData.length === 0 ? "[]" : missMatchedData
+    }`
+  );
 
-  //Helper functions to traverse JSON and add courses and sections appropriately
-  //Additionally, create Join Table rows
-  console.time("Populating process");
+  if (isDataMissMatched) {
+    return;
+  }
 
+  console.time("POPULATING PROCESS");
   try {
+    await addSemester({
+      semester_id: `${season}_${year}`,
+      season: season,
+      year: year,
+    });
     await Promise.all([
       altCoursesPopulate(newSemesterData, { year, season }),
       altSectionsPopulate(newSemesterData, { year, season }),
@@ -58,29 +58,52 @@ exports.addSemesterDataToSupabase = async function addSemesterDataToSupabase(
     // Handle errors from either promise
     console.error("Error:", error);
   }
-  console.timeEnd("Populating process");
+  console.timeEnd("POPULATING PROCESS");
 };
 
-function verifyJSONCount(newSemesterData) {
+async function semesterDataChanges(
+  oldSemesterData,
+  newSemesterData,
+  semesterDetails
+) {
+  console.log("-----------NEW does not have These-----------");
+  await deleteStaleRows(oldSemesterData, newSemesterData, semesterDetails);
+  console.log("-----------OLD does not have These-----------");
+  deleteStaleRows(newSemesterData, oldSemesterData, semesterDetails);
+}
+
+function createFileLocationPaths(filePath, season, year) {
+  return {
+    OLD_JSON_FILEPATH:
+      filePath + `\\${season}_${year}\\old_${season}_${year}` + ".json",
+    NEW_JSON_FILEPATH:
+      filePath + `\\${season}_${year}\\${season}_${year}` + ".json",
+  };
+}
+
+function verifyJSONCount(newSemesterData, options) {
   let coursesCount = 0;
-  let sectionCount = 0;
+  let sectionsCount = 0;
   for (const dep in newSemesterData) {
     const coursesAva = Object.keys(newSemesterData[dep]);
     coursesCount += coursesAva.length;
     for (let i = 0; i < coursesAva.length; i++) {
       const sectionsAva = Object.keys(newSemesterData[dep][coursesAva[i]]);
-      sectionCount += sectionsAva.length;
+      sectionsCount += sectionsAva.length;
     }
   }
   console.log("TOTAL NUMBER OF COURSES:", coursesCount);
-  console.log("TOTAL NUMBER OF SECTIONS:", sectionCount);
+  console.log("TOTAL NUMBER OF SECTIONS:", sectionsCount);
+
+  if (options.log === true) {
+    logger(`Course Count: ${coursesCount}, Section Count: ${sectionsCount}`);
+  }
 }
 
 async function readJSONFiles(fileLocations) {
   try {
     const oldSemesterData = await JSON.parse(
       fs.readFileSync(fileLocations.OLD_JSON_FILEPATH)
-      // fs.readFileSync('sample\\alt\\Summer_2023\\old_Summer_2023.json')
     );
     const newSemesterData = await JSON.parse(
       fs.readFileSync(fileLocations.NEW_JSON_FILEPATH)

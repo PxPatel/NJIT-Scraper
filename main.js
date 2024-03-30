@@ -6,16 +6,26 @@ async function main() {
 
   // const semesterDetails = {
   //   year: "2023",
-  //   season: "summer",
+  //   season: "Summer",
   // };
 
-  if (typeof semesterDetails === "undefined") {
-    await scraper.runScraper(FILE_DIRECTORY);
-  } else {
-    await scraper.runScraper(FILE_DIRECTORY, semesterDetails);
-  }
+  const semesterDetails = {
+    year: "" || process.env.YEAR,
+    season: "" || process.env.SEASON,
+  };
+
+  console.log(semesterDetails);
+
+  console.time("FULL OPERATION");
+
+  // if (typeof semesterDetails === "undefined") {
+  //   await scraper.runScraper(FILE_DIRECTORY);
+  // } else {
+  //   await scraper.runScraper(FILE_DIRECTORY, semesterDetails);
+  // }
 
   // await sb.addSemesterDataToSupabase(FILE_DIRECTORY, semesterDetails);
+  console.timeEnd("FULL OPERATION");
 }
 
 main();

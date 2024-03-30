@@ -1,3 +1,11 @@
+const {
+  deleteJointCourseSemesterRow,
+  deleteSection,
+  deleteJointSectionSemesterRow,
+} = require("./deleteRows");
+
+const fs = require("fs");
+
 /**
  *
  * @param {*} oldObj
@@ -64,16 +72,70 @@ function findDeletedSections(oldJson, newJson) {
   return deletedSections;
 }
 
+async function deleteRemovedCourses(deletedCoursesArray, semester_id) {
+  const removedCoursesEntries = Object.entries(deletedCoursesArray);
+
+  for (const [dep, courses] of removedCoursesEntries) {
+    let courseIdArray = courses.map((course) => dep + course); // Constructing courseIdArray
+    let successFlag = false;
+    do {
+      successFlag = await deleteJointCourseSemesterRow(
+        semester_id,
+        courseIdArray
+      );
+    } while (!successFlag);
+  }
+}
+
+async function deleteRemovedSections(deletedSectionsArray, semester_id) {
+  const removedSectionEntries = Object.entries(deletedSectionsArray);
+
+  for (const [dep, courseEntries] of removedSectionEntries) {
+    for (const [courseNumber, sections] of Object.entries(courseEntries)) {
+      let sectionIdArray = sections.map(
+        (sectionNumber) => `${dep}${courseNumber}-${sectionNumber}`
+      ); // Constructing sectionIdArray
+
+      let successFlag = false;
+      do {
+        successFlag = await deleteJointSectionSemesterRow(
+          semester_id,
+          sectionIdArray
+        );
+      } while (!successFlag);
+    }
+  }
+}
+
 exports.deleteStaleRows = async function deleteStaleRows(
   oldSemesterData,
-  newSemesterData
+  newSemesterData,
+  semesterDetails
 ) {
+  // const oldSemesterData1 = await JSON.parse(
+  //   fs.readFileSync(`sample\\alt\\Fall_2023\\Fall_2023.json`)
+  // );
+
+  if (Object.keys(newSemesterData).length === 0) {
+    console.log("The object is empty");
+    return;
+  }
+
   const { deletedDepartments, deletedCourses, deletedSections } =
     findDeletedItems(oldSemesterData, newSemesterData);
 
-  console.log(deletedDepartments, "\n", deletedCourses, "\n", deletedSections);
+  console.log(
+    "Deleted Departments:",
+    deletedDepartments,
+    "\nDeleted Courses:",
+    deletedCourses
+    // "\nDeleted Sections:",
+    // deletedSections
+  );
 
-  // await deleteRemovedCourses(deletedCourses);
-  // await deleteRemovedSections(deletedSections);
-  console.log("Finished with Deletion");
+  const semester_id = `${semesterDetails.season}_${semesterDetails.year}`;
+
+  // await deleteRemovedCourses(deletedCourses, semester_id);
+  // await deleteRemovedSections(deletedSections, semester_id);
+  console.log("\nFinished with Deletion");
 };
