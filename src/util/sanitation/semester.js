@@ -12,7 +12,8 @@ function sanityCheckSemesterDetail(semesterDetails) {
     const yearRegex = /^\d{4}$/;
 
     // Check if the string matches the regular expression
-    return yearRegex.test(yearString);
+    const ans = yearRegex.test(yearString);
+    return ans;
   };
 
   const isValidYearRange = (yearRangeString) => {

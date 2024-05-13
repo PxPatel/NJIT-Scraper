@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node --env-file=.env main.js",
-    "prof": "node --env-file=.env --prof main.js"
+    "prof": "node --env-file=.env --prof main.js",
+    "auto": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./executeProgramInLoop.ps1"
   },
   "keywords": [],
   "author": "Priyansh Patel",

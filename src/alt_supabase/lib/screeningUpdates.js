@@ -112,10 +112,6 @@ exports.deleteStaleRows = async function deleteStaleRows(
   newSemesterData,
   semesterDetails
 ) {
-  // const oldSemesterData1 = await JSON.parse(
-  //   fs.readFileSync(`sample\\alt\\Fall_2023\\Fall_2023.json`)
-  // );
-
   if (Object.keys(newSemesterData).length === 0) {
     console.log("The object is empty");
     return;

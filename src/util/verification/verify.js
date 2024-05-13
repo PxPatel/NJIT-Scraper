@@ -2,7 +2,7 @@
  *
  * @param {*} JSON_DATA
  */
-exports.verifySingularData = function verifySingularData(JSON_DATA) {
+exports.checkForMismatches = function checkForMismatches(JSON_DATA) {
   const departmentList = Object.keys(JSON_DATA);
   const missMatchedData = [];
 
@@ -14,14 +14,19 @@ exports.verifySingularData = function verifySingularData(JSON_DATA) {
     const entriesCourseSections = Object.entries(depJSON);
 
     for (let courseEntry of entriesCourseSections) {
-      const [, sectionsObjects] = courseEntry;
+      const [courseNumber, sectionsObjects] = courseEntry;
 
       const sampleSection = Object.values(sectionsObjects)[0];
 
-      if (sampleSection.subject !== department) {
+      if (
+        sampleSection.subject !== department ||
+        sampleSection.course !== courseNumber
+      ) {
         missMatchedData.push({
           department,
           sectionSubject: sampleSection.subject,
+          courseNumber,
+          sectionCourseNumber: sampleSection.course,
           fullSection: sampleSection,
         });
       }

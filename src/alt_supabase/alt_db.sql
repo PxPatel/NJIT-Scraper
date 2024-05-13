@@ -19,6 +19,7 @@ CREATE TABLE alt_courses (
     department TEXT NOT NULL,
     course_name TEXT NOT NULL,
     course_number TEXT NOT NULL,
+    credits NUMERIC(10, 1) NOT NULL,
     CONSTRAINT courses_uniqueness UNIQUE (department, course_number, course_name) 
 );
 
@@ -37,10 +38,10 @@ CREATE TABLE alt_sections (
     section_number TEXT NOT NULL,
     co_sem_id TEXT NOT NULL,
     crn INT NOT NULL,
-    days TEXT[],
-    start_times BIGINT[],
-    end_times BIGINT[],
-    location TEXT[],
+    days TEXT[] NOT NULL,
+    start_times BIGINT[] NOT NULL,
+    end_times BIGINT[] NOT NULL,
+    location TEXT[] NOT NULL,
     status TEXT NOT NULL,
     credits NUMERIC(10,1) NOT NULL,
     info TEXT,

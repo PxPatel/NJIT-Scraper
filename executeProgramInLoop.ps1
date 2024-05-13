@@ -1,5 +1,5 @@
-$seasons = @("Summer", "Fall")
-$years = @("2023", "2024")
+$seasons = @("Spring", "Winter")
+$years = @("2024","2023-2024")
 
 for ($i = 0; $i -lt $seasons.Length; $i++) {
     $env:YEAR = $years[$i]

@@ -55,9 +55,8 @@ const getAllSectionsForCourse = async (page, courses) => {
         return {};
       }
 
-      const seperateData = (tdElement) => {
+      const getElementText = (tdElement) => {
         const textContent = tdElement.innerHTML.trim();
-        // return textContent;
 
         // Check if the text content contains the <br> tag
         if (textContent.includes("<br>")) {
@@ -67,6 +66,119 @@ const getAllSectionsForCourse = async (page, courses) => {
           // If it doesn't contain <br>, return an array with just the text content
           return [textContent];
         }
+      };
+
+      const separateDaysData = (tdElement) => {
+        const rawDaysArray = getElementText(tdElement).map((dayString) => {
+          return dayString === "" ? "X" : dayString;
+        });
+
+        const unorderedDaysArray = [];
+        for (let i = 0; i < rawDaysArray.length; i++) {
+          const dayString = rawDaysArray[i];
+
+          if (dayString.length > 1) {
+            const daysInString = Array.from(dayString);
+            unorderedDaysArray.push(...daysInString);
+          } else {
+            unorderedDaysArray.push(dayString);
+          }
+        }
+
+        const { sortedDaysArray, swapCoordinates } =
+          orderDaysArray(unorderedDaysArray);
+
+        return { sortedDaysArray, rawDaysArray, swapCoordinates };
+      };
+
+      const orderDaysArray = (days) => {
+        // Define a mapping of days of the week to their positions
+        const dayOrder = { M: 1, T: 2, W: 3, R: 4, F: 5, S: 6, X: 7 };
+
+        // Handle the edge case where the array has only one element
+        if (days.length === 1) {
+          if (days[0] === "") return { days: [""], swapCoordinates: [0] };
+        }
+
+        // Create an array to hold the sorted days and their original indices
+        const indexedDays = days.map((day, index) => ({ day: day, index }));
+
+        // Sort the array based on the mapping of days of the week
+        indexedDays.sort(
+          (a, b) => dayOrder[a.day] - dayOrder[b.day] || a.index - b.index
+        );
+
+        // Extract sorted days and original indices
+        const sortedDays = indexedDays.map(({ day }) => day);
+        const sortedDaysCopy = [...sortedDays];
+
+        const swapCoordinates = days.map((day) => {
+          const swapIndex = sortedDaysCopy.indexOf(day);
+          sortedDaysCopy[swapIndex] = null;
+          return swapIndex;
+        });
+
+        return { sortedDaysArray: sortedDays, swapCoordinates };
+      };
+
+      const seperateTimesData = (tdElement, rawDaysArray, swapCoordinates) => {
+        const rawTimesArray = getElementText(tdElement);
+
+        if (rawTimesArray.length != rawDaysArray.length) {
+          return Array.from({ length: rawTimesArray.length }, () => "TBA");
+        }
+
+        const matchingSizeTimesArray = [];
+        for (let dayIndex in rawDaysArray) {
+          const strLength = rawDaysArray[dayIndex].length;
+          for (let i = 0; i < strLength; i++) {
+            matchingSizeTimesArray.push(rawTimesArray[dayIndex]);
+          }
+        }
+
+        const sortedTimesArray = Array.from(
+          { length: swapCoordinates.length },
+          () => ""
+        );
+        for (let timeIndex in matchingSizeTimesArray) {
+          const timeRange = matchingSizeTimesArray[timeIndex];
+          const swapTo = swapCoordinates[timeIndex];
+          sortedTimesArray[swapTo] = timeRange;
+        }
+
+        return sortedTimesArray;
+      };
+
+      const seperateLocationData = (
+        tdElement,
+        rawDaysArray,
+        swapCoordinates
+      ) => {
+        const rawLocationArray = getElementText(tdElement);
+
+        if (rawLocationArray.length != rawDaysArray.length) {
+          return Array.from({ length: rawLocationArray.length }, () => "");
+        }
+
+        const matchingSizeLocationArray = [];
+        for (let dayIndex in rawDaysArray) {
+          const strLength = rawDaysArray[dayIndex].length;
+          for (let i = 0; i < strLength; i++) {
+            matchingSizeLocationArray.push(rawLocationArray[dayIndex]);
+          }
+        }
+
+        const sortedLocationArray = Array.from(
+          { length: swapCoordinates.length },
+          () => ""
+        );
+        for (let timeIndex in matchingSizeLocationArray) {
+          const timeRange = matchingSizeLocationArray[timeIndex];
+          const swapTo = swapCoordinates[timeIndex];
+          sortedLocationArray[swapTo] = timeRange;
+        }
+
+        return sortedLocationArray;
       };
 
       const getSectionDetails = (dupTable) => {
@@ -91,12 +203,22 @@ const getAllSectionsForCourse = async (page, courses) => {
               .textContent.trim();
             const crn = row.querySelector("td:nth-child(2)").textContent.trim();
 
-            const days = seperateData(row.querySelector("td:nth-child(3)"));
+            const {
+              sortedDaysArray: days,
+              rawDaysArray,
+              swapCoordinates,
+            } = separateDaysData(row.querySelector("td:nth-child(3)"));
 
-            const times = seperateData(row.querySelector("td:nth-child(4)"));
+            const times = seperateTimesData(
+              row.querySelector("td:nth-child(4)"),
+              rawDaysArray,
+              swapCoordinates
+            );
 
-            const locations = seperateData(
-              row.querySelector("td:nth-child(5)")
+            const locations = seperateLocationData(
+              row.querySelector("td:nth-child(5)"),
+              rawDaysArray,
+              swapCoordinates
             );
 
             const status = row

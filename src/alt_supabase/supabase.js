@@ -18,7 +18,7 @@ const populateSupabaseTable = async (filePath, semesterDetails) => {
     NEW_JSON_FILEPATH: filePath + `${season}_${year}` + ".json",
   };
 
-  //TODO: Add a try catch to see that file exists
+  // TODO Add a try catch to see that file exists
   const oldSemesterData = await JSON.parse(
     fs.readFileSync(fileLocations.OLD_JSON_FILEPATH)
   );

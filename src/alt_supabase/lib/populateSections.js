@@ -46,8 +46,8 @@ exports.altSectionsPopulate = async function altSectionsPopulate(
 
             const crn = section_details.crn;
             const instructor = section_details.instructors ?? null;
-            const location = section_details.locations ?? null;
-            const status = section_details.status ?? null;
+            const location = section_details.locations;
+            const status = section_details.status;
             const credits = section_details.credits;
             const info = section_details.info ?? null;
 

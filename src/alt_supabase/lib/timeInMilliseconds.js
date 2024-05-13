@@ -13,14 +13,15 @@ function convertTimeToNumeric(time) {
     let startHours = parseInt(startParts[0].split(":")[0]);
     const startMinutes = parseInt(startParts[0].split(":")[1]);
     const startPeriod = startParts[1].toUpperCase();
-    startHours = startPeriod === "PM" ? startHours + 12 : startHours;
+    startHours =
+      startPeriod === "PM" && startHours !== 12 ? startHours + 12 : startHours;
 
     // Parse end time
     const endParts = endTime.split(" ");
     let endHours = parseInt(endParts[0].split(":")[0]);
     const endMinutes = parseInt(endParts[0].split(":")[1]);
     const endPeriod = endParts[1].toUpperCase();
-    endHours = endPeriod === "PM" ? endHours + 12 : endHours;
+    endHours = endPeriod === "PM" && endHours !== 12 ? endHours + 12 : endHours;
 
     // Calculate milliseconds from midnight
     const startMilliseconds = (startHours * 60 + startMinutes) * 60 * 1000;

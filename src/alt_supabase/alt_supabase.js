@@ -4,7 +4,7 @@ const { deleteStaleRows } = require("./lib/screeningUpdates.js");
 const { addSemester } = require("./lib/addSemesterRow.js");
 const { altCoursesPopulate } = require("./lib/populateCourses.js");
 const { altSectionsPopulate } = require("./lib/populateSections.js");
-const { verifySingularData } = require("../util/verification/verify.js");
+const { checkForMismatches } = require("../util/verification/verify.js");
 const { logger } = require("../util/logging/logger.js");
 
 exports.addSemesterDataToSupabase = async function addSemesterDataToSupabase(
@@ -23,16 +23,22 @@ exports.addSemesterDataToSupabase = async function addSemesterDataToSupabase(
 
   const fileLocations = createFileLocationPaths(filePath, season, year);
 
-  const { oldSemesterData, newSemesterData } = await readJSONFiles(
-    fileLocations
-  );
+  const {
+    oldSemesterData,
+    newSemesterData,
+    error: errorInReadingFiles,
+  } = await readJSONFiles(fileLocations);
 
-  verifyJSONCount(newSemesterData, { log: true });
+  if (errorInReadingFiles) {
+    return;
+  }
+
+  consoleJSONCount(newSemesterData, { log: true });
 
   await semesterDataChanges(oldSemesterData, newSemesterData, semesterDetails);
 
   const { isDataMissMatched, missMatchedData } =
-    verifySingularData(newSemesterData);
+    checkForMismatches(newSemesterData);
   console.log(
     `\nisDataMissMatched: ${isDataMissMatched}, missMatchedData: ${
       missMatchedData.length === 0 ? "[]" : missMatchedData
@@ -81,7 +87,7 @@ function createFileLocationPaths(filePath, season, year) {
   };
 }
 
-function verifyJSONCount(newSemesterData, options) {
+function consoleJSONCount(newSemesterData, options) {
   let coursesCount = 0;
   let sectionsCount = 0;
   for (const dep in newSemesterData) {
@@ -108,9 +114,9 @@ async function readJSONFiles(fileLocations) {
     const newSemesterData = await JSON.parse(
       fs.readFileSync(fileLocations.NEW_JSON_FILEPATH)
     );
-    return { oldSemesterData, newSemesterData };
+    return { oldSemesterData, newSemesterData, error: false };
   } catch (error) {
     console.log(error);
-    return { oldSemesterData: {}, newSemesterData: {} };
+    return { oldSemesterData: {}, newSemesterData: {}, error: true };
   }
 }
