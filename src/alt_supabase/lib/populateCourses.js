@@ -15,7 +15,7 @@ exports.altCoursesPopulate = async function altCoursesPopulate(
   semesterDetails
 ) {
   const departmentList = Object.keys(JSON_DATA);
-  console.log("LENGTH:", departmentList.length);
+  console.log("NUM DEPARTMENTS:", departmentList.length);
   const { year, season } = semesterDetails;
   const semester_id = `${season}_${year}`;
 
@@ -115,7 +115,7 @@ exports.altCoursesPopulate = async function altCoursesPopulate(
           console.log("REPEATING COURSES BATCH");
         }
       } catch (error) {
-        console.error("Error catch:", error.message);
+        console.error("Large Error Catch in Course:", error.message);
         return;
       }
     }
@@ -168,8 +168,8 @@ async function dedupBatchedData(batchedData, duplicateData) {
     return deduplicatedData;
   } catch (error) {
     console.error("Error deduplicating batched data:", error);
-    console.log(batchedData);
-    console.log(duplicateData);
+    console.log("From dedupBatchedData", batchedData);
+    console.log("From dedupBatchedData", duplicateData);
     throw error;
   }
 }

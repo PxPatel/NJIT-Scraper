@@ -10,14 +10,15 @@ async function upsertBatchCourses(batchedData) {
     .select();
 
   if (error) {
-    console.log(data, error);
+    console.log("Catch 1", data, error);
   }
 
   if (error && error.code !== "23505" && error.code !== "23503") {
-    console.log(data, error);
+    console.log("Catch 2", data, error);
   }
 
   if (!data && error && error.code !== "23505" && error.code !== "23503") {
+    console.log("Catch 3 (BAD): False in course upsert was returned");
     return { success: false, data };
   }
 
@@ -25,7 +26,6 @@ async function upsertBatchCourses(batchedData) {
 }
 
 async function getCourse(conditions) {
-
   try {
     const { data, error } = await supabaseClient
       .from("alt_courses")
@@ -35,13 +35,13 @@ async function getCourse(conditions) {
       .eq("course_name", conditions.course_name);
 
     if (error) {
-      console.log(error);
+      console.log("IN GET COURSE:", error);
       return { success: false, data };
     }
     return { success: true, data };
   } catch (error) {
     console.log(error);
-    throw Error("IN GETCOURSE:", error);
+    throw Error("Large Catch in getCourse:", error);
   }
 }
 

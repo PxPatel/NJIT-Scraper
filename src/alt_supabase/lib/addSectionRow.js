@@ -11,16 +11,16 @@ async function upsertBatchSections(batchedData) {
     .select();
 
   if (error) {
-    console.log(data, error);
+    console.log("Catch 1", data, error);
   }
 
   if (error && error.code !== "23505" && error.code !== "23503") {
-    console.log(data, error);
+    console.log("Catch 2", data, error);
   }
 
   if (!data && error && error.code !== "23505") {
     //Trigger
-    console.log("False was returned");
+    console.log("Catch 3 (BAD): False in section upsert was returned");
     return { success: false };
   }
 

@@ -98,30 +98,32 @@ exports.altSectionsPopulate = async function altSectionsPopulate(
             };
           });
 
-          const sectionTableSucess = (await upsertBatchSections(sectionsData))
+          const sectionTableSuccess = (await upsertBatchSections(sectionsData))
             .success;
 
           const jointSectionSemesterTableSuccess = (
             await upsertSectionSemesterJoinTable(jointSectionSemesterData)
           ).success;
 
-          if (sectionTableSucess && jointSectionSemesterTableSuccess) {
+          if (sectionTableSuccess && jointSectionSemesterTableSuccess) {
             // Process successful upserts
             remainingSectionsToEnter -= batch.length;
             availableSectionsList.splice(0, batchSize);
           } else {
-            console.log(sectionTableSucess);
-            console.log(jointSectionSemesterTableSuccess);
-
-            console.log(sectionsData[0]);
-
-            console.log("REPEATING SECTION BATCH");
+            console.log("-----Unsuccessful sections upsert-----");
+            console.log("Section Table Success", sectionTableSuccess);
+            console.log(
+              "Section-Sem Table Success",
+              jointSectionSemesterTableSuccess
+            );
+            console.log("Sample of batch", sectionsData[0]);
+            console.log("-----REPEATING SECTION BATCH-----");
           }
         }
       }
     }
   } catch (error) {
-    console.error("Error catch:", error.message);
+    console.error("Large Error Catch in Section:", error.message);
     return;
   }
 
