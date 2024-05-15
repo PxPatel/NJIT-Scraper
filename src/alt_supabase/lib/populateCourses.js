@@ -41,27 +41,39 @@ exports.altCoursesPopulate = async function altCoursesPopulate(
           const course_name = sectionsList[0][1].name;
           const credits = sectionsList[0][1].credits;
 
+          //Checks if the courseTitle is unique.
+          //In some edge cases, there are courses with different names but the same courseTitle
+          //Those edge cases are properly scrapped and importing into the JSON
+          //but to post into the db requires us to account for it through this process
           let isCourseHeaderUnique = true;
           const courseNameSet = new Set();
 
+          //Add all the course names from the sectionData
+          //Sections are the sections for a particular courseTitle
           for (section of sectionsList) {
             courseNameSet.add(section[1].name);
           }
 
           const normalCourses = new Set();
 
+          //For each courseName, add it to the normalCourses set (ignore HONORS)
           courseNameSet.forEach((course) => {
-            if (!course.includes("HONORS")) {
+            if (!(course.includes("HONORS") || course.includes("HONOR"))) {
               normalCourses.add(course);
             }
           });
 
+          //Since the sections are all from one courseTitle, the courseTitle is not unique if
+          //the set contains more than one courseName
+          //>1 names in the set indicate that there are multiple courses offered under this same courseTitle
           isCourseHeaderUnique = normalCourses.size === 1 ? true : false;
 
           // if (courseNameSet.size > 1) {
           //   console.log(courseNameSet);
           //   console.log(isCourseHeaderUnique);
           // }
+
+          //If courseTitle is not unique, insert "VARIES" for the course_name along for the semester it is varied for
           return {
             department,
             course_name: isCourseHeaderUnique

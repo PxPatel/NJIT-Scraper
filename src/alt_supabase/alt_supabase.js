@@ -33,7 +33,10 @@ exports.addSemesterDataToSupabase = async function addSemesterDataToSupabase(
     return;
   }
 
-  consoleJSONCount(newSemesterData, { log: true });
+  consoleJSONCount(newSemesterData, {
+    log: true,
+    semester_id: `${season}_${year}`,
+  });
 
   await semesterDataChanges(oldSemesterData, newSemesterData, semesterDetails);
 
@@ -102,7 +105,9 @@ function consoleJSONCount(newSemesterData, options) {
   console.log("TOTAL NUMBER OF SECTIONS:", sectionsCount);
 
   if (options.log === true) {
-    logger(`Course Count: ${coursesCount}, Section Count: ${sectionsCount}`);
+    logger(
+      `Parsing ${options.semester_id}, Course Count: ${coursesCount}, Section Count: ${sectionsCount}`
+    );
   }
 }
 
